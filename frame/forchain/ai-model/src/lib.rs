@@ -63,7 +63,7 @@ pub mod pallet {
 	pub type Something<T> = StorageValue<_, u32>;
 
 
-	//AuthRight information, to quickiy locate AuthRight
+	//所有的模型 map
 	#[pallet::storage]
 	#[pallet::getter(fn ai_model)]
 	pub(super) type AiModels<T: Config> = StorageMap<
@@ -74,6 +74,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	// 个人用户下的模型列表
 	#[pallet::storage]
 	#[pallet::getter(fn user_model)]
 	pub(super) type UserModels<T: Config> = StorageMap<
@@ -84,6 +85,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	// 模型下载的支付历史（谁支付过这个模型）
 	#[pallet::storage]
 	#[pallet::getter(fn model_paid)]
 	pub(super) type ModelPaid<T: Config> = StorageMap<
@@ -94,6 +96,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	// 用户Post(帖子） map
 	#[pallet::storage]
 	#[pallet::getter(fn user_posts)]
 	pub(super) type UserPosts<T: Config> = StorageMap<
@@ -104,6 +107,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	// 所有的Post 列表
 	#[pallet::storage]
 	#[pallet::getter(fn ai_post)]
 	pub(super) type ModelPost<T: Config> = StorageMap<
@@ -178,6 +182,8 @@ pub mod pallet {
 			}
 		}
 
+
+		/// 创建模型
 		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::do_something())]
 		pub fn create_ai_model(origin: OriginFor<T>,
@@ -222,6 +228,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// 创建模型下的（post）
 		#[pallet::call_index(3)]
 		#[pallet::weight(T::WeightInfo::do_something())]
 		pub fn create_ai_image(
@@ -258,6 +265,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// 购买模型
 		#[pallet::call_index(4)]
 		#[pallet::weight(T::WeightInfo::do_something())]
 		pub fn buy_model(
