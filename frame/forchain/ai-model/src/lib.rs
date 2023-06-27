@@ -25,6 +25,7 @@ use frame_support::{dispatch::DispatchResult,
 					pallet_prelude::*,traits::{ReservableCurrency}};
 use frame_system::pallet_prelude::*;
 use sp_std::vec::Vec;
+use sp_std::vec;
 use frame_support::sp_runtime::traits::Convert;
 use frame_support::traits::Time;
 
@@ -77,6 +78,11 @@ pub mod pallet {
 		AiModel<T::BlockNumber, <<T as Config>::Time as Time>::Moment, T::AccountId>,	//model
 		OptionQuery,
 	>;
+
+	//所有的模型的hash map
+	#[pallet::storage]
+	#[pallet::getter(fn ai_model_hash)]
+	pub(super) type AiModelHash<T: Config> = StorageValue<_, Vec<Vec<u8>>>;
 
 	// 个人用户下的模型列表
 	#[pallet::storage]
@@ -229,6 +235,7 @@ pub mod pallet {
 			ModelPaid::<T>::insert(hash.clone(),paid_vec);
 
 			Self::do_insert_user_model(who.clone(),hash.clone());
+			Self::do_insert_ai_model_hash(hash.clone());
 
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
@@ -315,6 +322,16 @@ impl<T: Config> Pallet<T> {
 		}
 
 		UserModels::<T>::insert(who.clone(), account_peer_map);
+	}
+
+	pub fn do_insert_ai_model_hash(hash: Vec<u8>) {
+		AiModelHash::<T>::mutate(|ai_model_hash| {
+			if let Some(data) = ai_model_hash {
+				data.insert(0, hash);
+			} else {
+				*ai_model_hash = Some(vec![hash]);
+			}
+		});
 	}
 
 	pub fn do_insert_ai_post(model_hash: Vec<u8>, ai_post: AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment,T::AccountId>) {
