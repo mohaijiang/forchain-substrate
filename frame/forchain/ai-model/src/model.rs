@@ -7,7 +7,7 @@ use sp_runtime::traits::AtLeast32BitUnsigned;
 //    模型结构
 // */
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, scale_info::TypeInfo)]
-pub struct AiModel<BlockNumber, AccountId>
+pub struct AiModel<BlockNumber, Moment, AccountId>
     where BlockNumber: Parameter + AtLeast32BitUnsigned{
     // 模型hash
     pub hash : Vec<u8>,
@@ -27,9 +27,11 @@ pub struct AiModel<BlockNumber, AccountId>
     pub account_id : AccountId,
     // 上传模型的区块
     pub block_number : BlockNumber,
+    //创建时间
+    pub create_time: Moment,
 }
 
-impl<BlockNumber, AccountId> AiModel<BlockNumber, AccountId>
+impl<BlockNumber, Moment, AccountId> AiModel<BlockNumber, Moment, AccountId>
     where BlockNumber: Parameter + AtLeast32BitUnsigned{
     pub fn new( hash: Vec<u8>,
                 name: Vec<u8>,
@@ -39,7 +41,8 @@ impl<BlockNumber, AccountId> AiModel<BlockNumber, AccountId>
                 download_price: u128,
                 comment: Vec<u8>,
                 account_id: AccountId,
-                block_number: BlockNumber
+                block_number: BlockNumber,
+                create_time: Moment
     ) -> Self {
         Self{
             hash,
@@ -51,6 +54,7 @@ impl<BlockNumber, AccountId> AiModel<BlockNumber, AccountId>
             comment,
             account_id,
             block_number,
+            create_time
         }
     }
 }
@@ -60,7 +64,7 @@ impl<BlockNumber, AccountId> AiModel<BlockNumber, AccountId>
 //    模型下用户Post（帖子）结构
 // */
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, scale_info::TypeInfo,PartialOrd, Ord)]
-pub struct AiPost<BlockNumber, AccountId>
+pub struct AiPost<BlockNumber, Moment, AccountId>
     where BlockNumber: Parameter + AtLeast32BitUnsigned{
     // 帖子所属模型hash
     pub model_hash : Vec<u8>,
@@ -76,9 +80,11 @@ pub struct AiPost<BlockNumber, AccountId>
     pub account_id : AccountId,
     // 帖子的创建所在区块
     pub block_number : BlockNumber,
+    //创建时间
+    pub create_time: Moment,
 }
 
-impl<BlockNumber, AccountId> AiPost<BlockNumber, AccountId>
+impl<BlockNumber, Moment, AccountId> AiPost<BlockNumber, Moment, AccountId>
     where BlockNumber: Parameter + AtLeast32BitUnsigned{
     pub fn new( model_hash: Vec<u8>,
                 name: Vec<u8>,
@@ -86,7 +92,8 @@ impl<BlockNumber, AccountId> AiPost<BlockNumber, AccountId>
                 image_links: Vec<Vec<u8>>,
                 comment: Vec<u8>,
                 account_id: AccountId,
-                block_number: BlockNumber
+                block_number: BlockNumber,
+                create_time: Moment
     ) -> Self {
         Self{
             model_hash,
@@ -96,6 +103,7 @@ impl<BlockNumber, AccountId> AiPost<BlockNumber, AccountId>
             comment,
             account_id,
             block_number,
+            create_time,
         }
     }
 }

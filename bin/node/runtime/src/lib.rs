@@ -1864,6 +1864,7 @@ impl pallet_ai_model::Config for Runtime {
 	type WeightInfo = pallet_ai_model::weights::SubstrateWeight<Runtime>;
 	type Currency = Balances;
 	type NumberToBalance = ConvertInto;
+	type Time = pallet_timestamp::Pallet<Runtime>;
 }
 
 construct_runtime!(

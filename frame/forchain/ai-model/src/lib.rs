@@ -26,6 +26,7 @@ use frame_support::{dispatch::DispatchResult,
 use frame_system::pallet_prelude::*;
 use sp_std::vec::Vec;
 use frame_support::sp_runtime::traits::Convert;
+use frame_support::traits::Time;
 
 
 type BalanceOf<T> =
@@ -34,6 +35,7 @@ type BalanceOf<T> =
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use frame_support::traits::Time;
 
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
@@ -52,6 +54,8 @@ pub mod pallet {
 
 		/// digital transfer amount
 		type NumberToBalance: Convert<u128, BalanceOf<Self>>;
+		/// timestamp
+		type Time: Time;
 	}
 
 	// The pallet's runtime storage items.
@@ -70,7 +74,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		Vec<u8>,	// hash
-		AiModel<T::BlockNumber,T::AccountId>,	//model
+		AiModel<T::BlockNumber, <<T as Config>::Time as Time>::Moment, T::AccountId>,	//model
 		OptionQuery,
 	>;
 
@@ -114,7 +118,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		Vec<u8>,								// model hash
-		Vec<AiPost<T::BlockNumber,T::AccountId>>,	// model post
+		Vec<AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment, T::AccountId>>,	// model post
 		OptionQuery,
 	>;
 
@@ -202,10 +206,11 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 
 			let block_number = <frame_system::Pallet<T>>::block_number();
+			let now_timestamp: <<T as Config>::Time as Time>::Moment = T::Time::now();
 
 			ensure!(!AiModels::<T>::contains_key(hash.clone()),Error::<T>::StorageOverflow);
 
-			let ai_model = AiModel::new(
+			let ai_model= AiModel::new(
 				hash.clone(),
 				name,
 				link,
@@ -214,7 +219,8 @@ pub mod pallet {
 				download_price,
 				comment,
 				who.clone(),
-				block_number
+				block_number,
+				now_timestamp
 			);
 			AiModels::<T>::insert(hash.clone(),ai_model);
 
@@ -245,6 +251,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 
 			let block_number = <frame_system::Pallet<T>>::block_number();
+			let now_timestamp: <<T as Config>::Time as Time>::Moment = T::Time::now();
 
 			ensure!(!ModelPost::<T>::contains_key(model_hash.clone()),Error::<T>::StorageOverflow);
 
@@ -255,7 +262,8 @@ pub mod pallet {
 				image_links,
 				comment,
 				who.clone(),
-				block_number
+				block_number,
+				now_timestamp
 			);
 
 			Self::do_insert_ai_post(model_hash.clone(),ai_model_post);
@@ -309,8 +317,8 @@ impl<T: Config> Pallet<T> {
 		UserModels::<T>::insert(who.clone(), account_peer_map);
 	}
 
-	pub fn do_insert_ai_post(model_hash: Vec<u8>, ai_post: AiPost<T::BlockNumber,T::AccountId>) {
-		let mut post_map: Vec<AiPost<T::BlockNumber,T::AccountId>>;
+	pub fn do_insert_ai_post(model_hash: Vec<u8>, ai_post: AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment,T::AccountId>) {
+		let mut post_map: Vec<AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment,T::AccountId>>;
 
 		if ModelPost::<T>::contains_key(model_hash.clone()) {
 			post_map = ModelPost::<T>::get(model_hash.clone()).unwrap();
