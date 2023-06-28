@@ -35,6 +35,7 @@ type BalanceOf<T> =
 
 #[frame_support::pallet]
 pub mod pallet {
+
 	use super::*;
 	use frame_support::traits::Time;
 
@@ -86,7 +87,7 @@ pub mod pallet {
 
 	// 个人用户下的模型列表
 	#[pallet::storage]
-	#[pallet::getter(fn user_model)]
+	#[pallet::getter(fn user_models)]
 	pub(super) type UserModels<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -108,23 +109,27 @@ pub mod pallet {
 
 	// 用户Post(帖子） map
 	#[pallet::storage]
-	#[pallet::getter(fn user_posts)]
-	pub(super) type UserPosts<T: Config> = StorageMap<
+	#[pallet::getter(fn user_post)]
+	pub(super) type UserPost<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		T::AccountId,		//userAccountId
-		Vec<Vec<u8>>,		// array model hash
+		Blake2_128Concat,
+		Vec<u8>,			//model hash
+		Vec<Vec<u8>>,		//post uuid
 		OptionQuery,
 	>;
 
 	// 所有的Post 列表
 	#[pallet::storage]
-	#[pallet::getter(fn ai_post)]
-	pub(super) type ModelPost<T: Config> = StorageMap<
+	#[pallet::getter(fn model_post)]
+	pub(super) type ModelPost<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		Vec<u8>,								// model hash
-		Vec<AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment, T::AccountId>>,	// model post
+		Blake2_128Concat,
+		Vec<u8>,								// post uuid
+		AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment, T::AccountId>,	// model post
 		OptionQuery,
 	>;
 
@@ -247,6 +252,7 @@ pub mod pallet {
 		pub fn create_ai_image(
 			origin: OriginFor<T>,
 			model_hash: Vec<u8>,
+			uuid: Vec<u8>,
 			name: Vec<u8>,
 			images: Vec<Vec<u8>>,
 			image_links: Vec<Vec<u8>>,
@@ -260,10 +266,11 @@ pub mod pallet {
 			let block_number = <frame_system::Pallet<T>>::block_number();
 			let now_timestamp: <<T as Config>::Time as Time>::Moment = T::Time::now();
 
-			ensure!(!ModelPost::<T>::contains_key(model_hash.clone()),Error::<T>::StorageOverflow);
+			ensure!(!ModelPost::<T>::contains_key(model_hash.clone(), uuid.clone()),Error::<T>::StorageOverflow);
 
 			let ai_model_post = AiPost::new(
 				model_hash.clone(),
+				uuid.clone(),
 				name,
 				images,
 				image_links,
@@ -273,8 +280,8 @@ pub mod pallet {
 				now_timestamp
 			);
 
-			Self::do_insert_ai_post(model_hash.clone(),ai_model_post);
-			Self::do_insert_user_post(who.clone(),model_hash);
+			Self::do_insert_ai_post(model_hash.clone(), uuid.clone(), ai_model_post);
+			Self::do_insert_user_post(who.clone(), model_hash.clone(), uuid.clone());
 
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
@@ -304,6 +311,8 @@ pub mod pallet {
 		}
 
 	}
+
+
 }
 
 impl<T: Config> Pallet<T> {
@@ -317,11 +326,10 @@ impl<T: Config> Pallet<T> {
 			account_peer_map = Vec::new();
 		}
 
-		if let Err(index) = account_peer_map.binary_search(&hash) {
-			account_peer_map.insert(index, hash.clone());
-		}
+		account_peer_map.push(hash.clone());
+		let reversed_account_peer_map: Vec<Vec<u8>> = account_peer_map.iter().rev().cloned().collect();
 
-		UserModels::<T>::insert(who.clone(), account_peer_map);
+		UserModels::<T>::insert(who.clone(), reversed_account_peer_map);
 	}
 
 	pub fn do_insert_ai_model_hash(hash: Vec<u8>) {
@@ -334,20 +342,8 @@ impl<T: Config> Pallet<T> {
 		});
 	}
 
-	pub fn do_insert_ai_post(model_hash: Vec<u8>, ai_post: AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment,T::AccountId>) {
-		let mut post_map: Vec<AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment,T::AccountId>>;
-
-		if ModelPost::<T>::contains_key(model_hash.clone()) {
-			post_map = ModelPost::<T>::get(model_hash.clone()).unwrap();
-		} else {
-			post_map = Vec::new();
-		}
-
-		if let Err(index) = post_map.binary_search(&ai_post) {
-			post_map.insert(index, ai_post);
-		}
-
-		ModelPost::<T>::insert(model_hash, post_map);
+	pub fn do_insert_ai_post(model_hash: Vec<u8>, post_uuid: Vec<u8>, ai_post: AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment,T::AccountId>) {
+		ModelPost::<T>::insert(&model_hash, &post_uuid, &ai_post);
 	}
 
 	pub fn do_insert_user_paid(hash: Vec<u8>, who: T::AccountId) {
@@ -366,20 +362,17 @@ impl<T: Config> Pallet<T> {
 		ModelPaid::<T>::insert(hash, paid_map);
 	}
 
+	pub fn do_insert_user_post(who: T::AccountId, hash: Vec<u8>, uuid: Vec<u8>) {
+		let mut uuid_vec: Vec<Vec<u8>>;
 
-	pub fn do_insert_user_post(who: T::AccountId, hash: Vec<u8>) {
-		let mut account_peer_map: Vec<Vec<u8>>;
-
-		if UserPosts::<T>::contains_key(who.clone()) {
-			account_peer_map = UserPosts::<T>::get(who.clone()).unwrap();
+		if UserPost::<T>::contains_key(who.clone(), hash.clone()) {
+			uuid_vec = UserPost::<T>::get(who.clone(), hash.clone()).unwrap();
 		} else {
-			account_peer_map = Vec::new();
+			uuid_vec = Vec::new();
 		}
+		uuid_vec.push(uuid.clone());
+		let reversed_uuid_vec: Vec<Vec<u8>> = uuid_vec.iter().rev().cloned().collect();
 
-		if let Err(index) = account_peer_map.binary_search(&hash) {
-			account_peer_map.insert(index, hash.clone());
-		}
-
-		UserPosts::<T>::insert(who.clone(), account_peer_map);
+		UserPost::<T>::insert(who.clone(), hash.clone(), reversed_uuid_vec);
 	}
 }

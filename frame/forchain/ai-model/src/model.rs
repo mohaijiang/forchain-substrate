@@ -68,6 +68,8 @@ pub struct AiPost<BlockNumber, Moment, AccountId>
     where BlockNumber: Parameter + AtLeast32BitUnsigned{
     // 帖子所属模型hash
     pub model_hash : Vec<u8>,
+    // uuid
+    pub uuid : Vec<u8>,
     // 帖子名
     pub name: Vec<u8>,
     // 帖子的图片列表
@@ -87,6 +89,7 @@ pub struct AiPost<BlockNumber, Moment, AccountId>
 impl<BlockNumber, Moment, AccountId> AiPost<BlockNumber, Moment, AccountId>
     where BlockNumber: Parameter + AtLeast32BitUnsigned{
     pub fn new( model_hash: Vec<u8>,
+                uuid : Vec<u8>,
                 name: Vec<u8>,
                 images: Vec<Vec<u8>>,
                 image_links: Vec<Vec<u8>>,
@@ -104,6 +107,7 @@ impl<BlockNumber, Moment, AccountId> AiPost<BlockNumber, Moment, AccountId>
             account_id,
             block_number,
             create_time,
+            uuid,
         }
     }
 }
