@@ -107,6 +107,17 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	// 个人购买过的模型）
+	#[pallet::storage]
+	#[pallet::getter(fn user_paid)]
+	pub(super) type UserPaid<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,		// model hash
+		Vec<Vec<u8>>,		// accountId
+		OptionQuery,
+	>;
+
 	// 所有的Post 列表
 	#[pallet::storage]
 	#[pallet::getter(fn ai_posts)]
@@ -246,12 +257,9 @@ pub mod pallet {
 			);
 			AiModels::<T>::insert(hash.clone(),ai_model);
 
-			let mut paid_vec = Vec::new();
-			paid_vec.insert(0,who.clone());
-			ModelPaid::<T>::insert(hash.clone(),paid_vec);
-
 			Self::do_insert_user_model(who.clone(),hash.clone());
 			Self::do_insert_ai_model_hash(hash.clone());
+			Self::do_insert_user_paid(hash,who);
 
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
@@ -435,7 +443,21 @@ impl<T: Config> Pallet<T> {
 			paid_map.insert(index, who.clone());
 		}
 
-		ModelPaid::<T>::insert(hash, paid_map);
+		ModelPaid::<T>::insert(hash.clone(), paid_map);
+
+
+		let mut user_map: Vec<Vec<u8>>;
+
+		if UserPaid::<T>::contains_key(who.clone()) {
+			user_map = UserPaid::<T>::get(who.clone()).unwrap();
+		} else {
+			user_map = Vec::new();
+		}
+
+		user_map.push(hash.clone());
+		let reversed_user_map: Vec<Vec<u8>> = user_map.iter().rev().cloned().collect();
+
+		UserPaid::<T>::insert(who,reversed_user_map);
 	}
 
 }
