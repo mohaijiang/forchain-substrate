@@ -34,7 +34,7 @@
 use std::sync::Arc;
 
 use jsonrpsee::RpcModule;
-use node_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Index};
+use node_primitives::{AccountId, Balance, Block, BlockNumber, Hash, Index, Moment};
 use sc_client_api::AuxStore;
 use sc_consensus_babe::BabeWorkerHandle;
 use sc_consensus_grandpa::{
@@ -111,6 +111,7 @@ where
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: BabeApi<Block>,
 	C::Api: BlockBuilder<Block>,
+	// C::Api: ai_model_rpc::AiModelRuntimeApi<Block, AccountId, BlockNumber, Moment>,
 	P: TransactionPool + 'static,
 	SC: SelectChain<Block> + 'static,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
@@ -118,6 +119,7 @@ where
 {
 	use mmr_rpc::{Mmr, MmrApiServer};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
+	// use ai_model_rpc::{AiModelApi, AiModel};
 	use sc_consensus_babe_rpc::{Babe, BabeApiServer};
 	use sc_consensus_grandpa_rpc::{Grandpa, GrandpaApiServer};
 	use sc_rpc::{

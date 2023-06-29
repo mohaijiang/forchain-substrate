@@ -21,6 +21,8 @@ pub struct AiModel<BlockNumber, Moment, AccountId>
     pub image_links: Vec<Vec<u8>>,
     // 购买（下载）模型的价格
     pub download_price: u128,
+    // model的大小 字节
+    pub size: u128,
     // 模型的描述信息（markdown 格式）
     pub comment: Vec<u8>,
     // 模型拥有者账户地址
@@ -39,6 +41,7 @@ impl<BlockNumber, Moment, AccountId> AiModel<BlockNumber, Moment, AccountId>
                 images: Vec<Vec<u8>>,
                 image_links: Vec<Vec<u8>>,
                 download_price: u128,
+                size: u128,
                 comment: Vec<u8>,
                 account_id: AccountId,
                 block_number: BlockNumber,
@@ -51,6 +54,7 @@ impl<BlockNumber, Moment, AccountId> AiModel<BlockNumber, Moment, AccountId>
             images,
             image_links,
             download_price,
+            size,
             comment,
             account_id,
             block_number,
@@ -111,3 +115,35 @@ impl<BlockNumber, Moment, AccountId> AiPost<BlockNumber, Moment, AccountId>
         }
     }
 }
+
+// #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, scale_info::TypeInfo)]
+// #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+// pub struct Page<BlockNumber, Moment, AccountId, T>
+//     where BlockNumber: Parameter + AtLeast32BitUnsigned, T: Clone {
+//     // 数据
+//     pub data : Vec<T>,
+//     // 总数
+//     pub page: u64,
+//     // 总数
+//     pub size: u64,
+//     // 总数
+//     pub total: u64,
+// }
+//
+//
+//
+// impl<BlockNumber, Moment, AccountId> Page<BlockNumber, Moment, AccountId, T>
+//     where BlockNumber: Parameter + AtLeast32BitUnsigned, T: Clone {
+//     pub fn new( data : Vec<T>,
+//                 page: u64,
+//                 size: u64,
+//                 total: u64,
+//     ) -> Self {
+//         Self{
+//             data,
+//             page,
+//             size,
+//             total,
+//         }
+//     }
+// }

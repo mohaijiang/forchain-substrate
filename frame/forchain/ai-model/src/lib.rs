@@ -71,7 +71,7 @@ pub mod pallet {
 
 	//所有的模型 map
 	#[pallet::storage]
-	#[pallet::getter(fn ai_model)]
+	#[pallet::getter(fn ai_models)]
 	pub(super) type AiModels<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -107,31 +107,40 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	// 用户Post(帖子） map
-	#[pallet::storage]
-	#[pallet::getter(fn user_post)]
-	pub(super) type UserPost<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::AccountId,		//userAccountId
-		Blake2_128Concat,
-		Vec<u8>,			//model hash
-		Vec<Vec<u8>>,		//post uuid
-		OptionQuery,
-	>;
-
 	// 所有的Post 列表
 	#[pallet::storage]
-	#[pallet::getter(fn model_post)]
-	pub(super) type ModelPost<T: Config> = StorageDoubleMap<
+	#[pallet::getter(fn ai_posts)]
+	pub(super) type AiPosts<T: Config> = StorageMap<
 		_,
-		Blake2_128Concat,
-		Vec<u8>,								// model hash
 		Blake2_128Concat,
 		Vec<u8>,								// post uuid
 		AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment, T::AccountId>,	// model post
 		OptionQuery,
 	>;
+
+	// Model Post(帖子） map
+	#[pallet::storage]
+	#[pallet::getter(fn model_post)]
+	pub(super) type ModelPost<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		Vec<u8>,			// model hash
+		Vec<Vec<u8>>,		// post uuid
+		OptionQuery,
+	>;
+
+	// 用户 Post(帖子） map
+	#[pallet::storage]
+	#[pallet::getter(fn user_post)]
+	pub(super) type UserPost<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,		//userAccountId
+		Vec<Vec<u8>>,		//post uuid
+		OptionQuery,
+	>;
+
+
 
 
 	// Pallets use events to inform users when important changes are made.
@@ -208,6 +217,7 @@ pub mod pallet {
 							   images: Vec<Vec<u8>>,
 							   image_links: Vec<Vec<u8>>,
 							   download_price: u128,
+							   size: u128,
 							   comment: Vec<u8>
 
 		) -> DispatchResult {
@@ -228,6 +238,7 @@ pub mod pallet {
 				images,
 				image_links,
 				download_price,
+				size,
 				comment,
 				who.clone(),
 				block_number,
@@ -266,7 +277,7 @@ pub mod pallet {
 			let block_number = <frame_system::Pallet<T>>::block_number();
 			let now_timestamp: <<T as Config>::Time as Time>::Moment = T::Time::now();
 
-			ensure!(!ModelPost::<T>::contains_key(model_hash.clone(), uuid.clone()),Error::<T>::StorageOverflow);
+			ensure!(!AiPosts::<T>::contains_key(uuid.clone()),Error::<T>::StorageOverflow);
 
 			let ai_model_post = AiPost::new(
 				model_hash.clone(),
@@ -281,7 +292,8 @@ pub mod pallet {
 			);
 
 			Self::do_insert_ai_post(model_hash.clone(), uuid.clone(), ai_model_post);
-			Self::do_insert_user_post(who.clone(), model_hash.clone(), uuid.clone());
+			Self::do_insert_user_post(who.clone(), uuid.clone());
+			Self::do_insert_model_post(model_hash.clone(), uuid.clone());
 
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
@@ -316,6 +328,42 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+
+	//sort 0倒序 1正序
+	// pub fn page_user_order(account_id: T::AccountId, page: u64, size: u64, sort: u8) -> Page<T::BlockNumber, <<T as Config>::Time as Time>::Moment,T::AccountId, AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment,T::AccountId>> {
+	// 	let uuid_vec = UserPost::<T>::get(account_id.clone()).unwrap();
+	// 	let total = uuid_vec.clone().len() as u64;
+	// 	let page = if page == 0 { 1 } else { page };
+	// 	let begin = if (page - 1) * size >= total && page >= 2 {
+	// 		(page - 2) * size
+	// 	} else if (page - 1) * size >= total && page < 2  {
+	// 		0
+	// 	} else {
+	// 		(page - 1) * size
+	// 	};
+	// 	let end = if page * size > total{ total } else { page * size };
+	// 	let post_list = Self::get_ai_post_list(uuid_vec.clone(), begin, end, sort);
+	// 	Page::new(post_list, page, size, total)
+	//
+	// }
+	//
+	// pub fn get_ai_post_list(mut uuid_vec: Vec<Vec<u8>>, begin: u64, end: u64, sort: u8 ) -> Vec<AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment,T::AccountId>> {
+	// 	let mut post_vec = Vec::<AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment,T::AccountId>>::new();
+	// 	let mut reversed_uuid_vec: Vec<Vec<u8>>;
+	// 	if sort == 1 {
+	// 		reversed_uuid_vec = uuid_vec.iter().rev().cloned().collect();
+	// 	} else {
+	// 		reversed_uuid_vec = uuid_vec;
+	// 	}
+	// 	let begin = if begin == 0 { 0 } else { begin - 1 };
+	// 	let uuids = reversed_uuid_vec.get(begin..end).unwrap();
+	// 	for uuid in uuids.iter() {
+	// 		let ai_post = AiPosts::<T>::get(uuid).unwrap();
+	// 		post_vec.push(ai_post);
+	// 	}
+	// 	post_vec
+	// }
+
 	// associate user and order number
 	pub fn do_insert_user_model(who: T::AccountId, hash: Vec<u8>) {
 		let mut account_peer_map: Vec<Vec<u8>>;
@@ -343,7 +391,35 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn do_insert_ai_post(model_hash: Vec<u8>, post_uuid: Vec<u8>, ai_post: AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment,T::AccountId>) {
-		ModelPost::<T>::insert(&model_hash, &post_uuid, &ai_post);
+		AiPosts::<T>::insert(&post_uuid, &ai_post);
+	}
+
+	pub fn do_insert_user_post(who: T::AccountId, uuid: Vec<u8>) {
+		let mut uuid_vec: Vec<Vec<u8>>;
+
+		if UserPost::<T>::contains_key(who.clone()) {
+			uuid_vec = UserPost::<T>::get(who.clone()).unwrap();
+		} else {
+			uuid_vec = Vec::new();
+		}
+		uuid_vec.push(uuid.clone());
+		let reversed_uuid_vec: Vec<Vec<u8>> = uuid_vec.iter().rev().cloned().collect();
+
+		UserPost::<T>::insert(who.clone(), reversed_uuid_vec);
+	}
+
+	pub fn do_insert_model_post(hash: Vec<u8>, uuid: Vec<u8>) {
+		let mut uuid_vec: Vec<Vec<u8>>;
+
+		if ModelPost::<T>::contains_key(hash.clone()) {
+			uuid_vec = ModelPost::<T>::get(hash.clone()).unwrap();
+		} else {
+			uuid_vec = Vec::new();
+		}
+		uuid_vec.push(uuid.clone());
+		let reversed_uuid_vec: Vec<Vec<u8>> = uuid_vec.iter().rev().cloned().collect();
+
+		ModelPost::<T>::insert(hash.clone(), reversed_uuid_vec);
 	}
 
 	pub fn do_insert_user_paid(hash: Vec<u8>, who: T::AccountId) {
@@ -362,17 +438,6 @@ impl<T: Config> Pallet<T> {
 		ModelPaid::<T>::insert(hash, paid_map);
 	}
 
-	pub fn do_insert_user_post(who: T::AccountId, hash: Vec<u8>, uuid: Vec<u8>) {
-		let mut uuid_vec: Vec<Vec<u8>>;
-
-		if UserPost::<T>::contains_key(who.clone(), hash.clone()) {
-			uuid_vec = UserPost::<T>::get(who.clone(), hash.clone()).unwrap();
-		} else {
-			uuid_vec = Vec::new();
-		}
-		uuid_vec.push(uuid.clone());
-		let reversed_uuid_vec: Vec<Vec<u8>> = uuid_vec.iter().rev().cloned().collect();
-
-		UserPost::<T>::insert(who.clone(), hash.clone(), reversed_uuid_vec);
-	}
 }
+
+
