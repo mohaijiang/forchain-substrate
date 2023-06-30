@@ -13,6 +13,8 @@ pub struct AiModel<BlockNumber, Moment, AccountId>
     pub hash : Vec<u8>,
     // 模型名
     pub name: Vec<u8>,
+    // 模型名
+    pub filename: Vec<u8>,
     // 模型下载地址
     pub link: Vec<u8>,
     // 模型的实例图片
@@ -37,6 +39,7 @@ impl<BlockNumber, Moment, AccountId> AiModel<BlockNumber, Moment, AccountId>
     where BlockNumber: Parameter + AtLeast32BitUnsigned{
     pub fn new( hash: Vec<u8>,
                 name: Vec<u8>,
+                filename: Vec<u8>,
                 link: Vec<u8>,
                 images: Vec<Vec<u8>>,
                 image_links: Vec<Vec<u8>>,
@@ -50,6 +53,7 @@ impl<BlockNumber, Moment, AccountId> AiModel<BlockNumber, Moment, AccountId>
         Self{
             hash,
             name,
+            filename,
             link,
             images,
             image_links,

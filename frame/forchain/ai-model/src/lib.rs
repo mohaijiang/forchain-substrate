@@ -224,6 +224,7 @@ pub mod pallet {
 		pub fn create_ai_model(origin: OriginFor<T>,
 							   hash: Vec<u8>,
 							   name: Vec<u8>,
+							   filename: Vec<u8>,
 							   link: Vec<u8>,
 							   images: Vec<Vec<u8>>,
 							   image_links: Vec<Vec<u8>>,
@@ -245,6 +246,7 @@ pub mod pallet {
 			let ai_model= AiModel::new(
 				hash.clone(),
 				name,
+				filename,
 				link,
 				images,
 				image_links,
