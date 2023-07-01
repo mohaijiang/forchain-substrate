@@ -813,12 +813,12 @@ pub mod pallet {
 					}
 
 					match mint_settings.mint_type {
-						MintType::Issuer => {
-							ensure!(
-								Self::has_role(&collection, &caller, CollectionRole::Issuer),
-								Error::<T, I>::NoPermission
-							);
-						},
+						// MintType::Issuer => {
+						// 	ensure!(
+						// 		Self::has_role(&collection, &caller, CollectionRole::Issuer),
+						// 		Error::<T, I>::NoPermission
+						// 	);
+						// },
 						MintType::HolderOf(collection_id) => {
 							let MintWitness { owned_item, .. } =
 								witness_data.clone().ok_or(Error::<T, I>::WitnessRequired)?;
