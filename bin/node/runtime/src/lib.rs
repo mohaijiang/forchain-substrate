@@ -97,6 +97,9 @@ pub use pallet_sudo::Call as SudoCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
+/// Import the template pallet.
+pub use pallet_ai_model;
+
 /// Implementations of some helper traits passed into runtime modules as associated types.
 pub mod impls;
 #[cfg(not(feature = "runtime-benchmarks"))]
@@ -1476,7 +1479,7 @@ impl pallet_lottery::Config for Runtime {
 parameter_types! {
 	pub const AssetDeposit: Balance = 100 * DOLLARS;
 	pub const ApprovalDeposit: Balance = 1 * DOLLARS;
-	pub const StringLimit: u32 = 50;
+	pub const StringLimit: u32 = 195;
 	pub const MetadataDepositBase: Balance = 10 * DOLLARS;
 	pub const MetadataDepositPerByte: Balance = 1 * DOLLARS;
 }
@@ -1860,6 +1863,15 @@ impl pallet_statement::Config for Runtime {
 	type MaxAllowedBytes = MaxAllowedBytes;
 }
 
+/// Configure the pallet-template in pallets/template.
+impl pallet_ai_model::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_ai_model::weights::SubstrateWeight<Runtime>;
+	type Currency = Balances;
+	type NumberToBalance = ConvertInto;
+	type Time = pallet_timestamp::Pallet<Runtime>;
+}
+
 construct_runtime!(
 	pub struct Runtime where
 		Block = Block,
@@ -1935,6 +1947,7 @@ construct_runtime!(
 		MessageQueue: pallet_message_queue,
 		Pov: frame_benchmarking_pallet_pov,
 		Statement: pallet_statement,
+		AiModel: pallet_ai_model,
 	}
 );
 

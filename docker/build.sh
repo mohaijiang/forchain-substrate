@@ -8,8 +8,8 @@ cd $(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")
 
 # Find the current version from Cargo.toml
 VERSION=`grep "^version" ./bin/node/cli/Cargo.toml | egrep -o "([0-9\.]+)"`
-GITUSER=parity
-GITREPO=substrate
+GITUSER=hamstershare
+GITREPO=aishow-substrate
 
 # Build the image
 echo "Building ${GITUSER}/${GITREPO}:latest docker image, hang on!"

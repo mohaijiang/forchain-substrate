@@ -1,0 +1,17 @@
+version: "1"
+name: aishow
+stages:
+  init:
+    steps:
+      - name: set workdir
+        uses: workdir
+        with:
+          workdir: /Users/mohaijiang/IdeaProjects/blockchain/forchain-substrate
+  build:
+    steps:
+      - name: build
+        run: |
+          sh docker/build.sh
+  #          docker buildx build -f Dockerfile_worker -t hamstershare/hamster-develop-worker:${PIPELINE_ID} --platform=linux/amd64 --push .
+
+

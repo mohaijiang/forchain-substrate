@@ -27,12 +27,12 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		data: BoundedVec<u8, T::StringLimit>,
 		maybe_depositor: Option<T::AccountId>,
 	) -> DispatchResult {
-		if let Some(check_origin) = &maybe_check_origin {
-			ensure!(
-				Self::has_role(&collection, &check_origin, CollectionRole::Admin),
-				Error::<T, I>::NoPermission
-			);
-		}
+		// if let Some(check_origin) = &maybe_check_origin {
+		// 	ensure!(
+		// 		Self::has_role(&collection, &check_origin, CollectionRole::Admin),
+		// 		Error::<T, I>::NoPermission
+		// 	);
+		// }
 
 		let is_root = maybe_check_origin.is_none();
 		let mut collection_details =
