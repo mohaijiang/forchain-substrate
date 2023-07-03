@@ -162,6 +162,8 @@ pub mod pallet {
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored { something: u32, who: T::AccountId },
+		ModelCreated{hash: Vec<u8>, who: T::AccountId },
+		PostCreated{uuid: Vec<u8>, who: T::AccountId },
 	}
 
 	// Errors inform users that something went wrong.
@@ -261,7 +263,9 @@ pub mod pallet {
 
 			Self::do_insert_user_model(who.clone(),hash.clone());
 			Self::do_insert_ai_model_hash(hash.clone());
-			Self::do_insert_user_paid(hash,who);
+			Self::do_insert_user_paid(hash.clone(),who.clone());
+
+			Self::deposit_event(Event::ModelCreated { hash, who });
 
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
@@ -301,9 +305,11 @@ pub mod pallet {
 				now_timestamp
 			);
 
-			Self::do_insert_ai_post(model_hash.clone(), uuid.clone(), ai_model_post);
+			Self::do_insert_ai_post(uuid.clone(), ai_model_post);
 			Self::do_insert_user_post(who.clone(), uuid.clone());
 			Self::do_insert_model_post(model_hash.clone(), uuid.clone());
+
+			Self::deposit_event(Event::PostCreated { uuid, who });
 
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
@@ -400,7 +406,7 @@ impl<T: Config> Pallet<T> {
 		});
 	}
 
-	pub fn do_insert_ai_post(model_hash: Vec<u8>, post_uuid: Vec<u8>, ai_post: AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment,T::AccountId>) {
+	pub fn do_insert_ai_post(post_uuid: Vec<u8>, ai_post: AiPost<T::BlockNumber, <<T as Config>::Time as Time>::Moment,T::AccountId>) {
 		AiPosts::<T>::insert(&post_uuid, &ai_post);
 	}
 
